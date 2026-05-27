@@ -1,11 +1,11 @@
 name: Deploy Docs
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version to deploy (e.g. 1.0.0)"
-        required: true
+  push:
+    branches:
+      - docs
+    paths:
+      - "Documentation/latest/html/**"
 
 permissions:
   contents: read
