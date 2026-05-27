@@ -6,7 +6,7 @@
       try{
         var p=new URL(url,location.origin).pathname;
         var segs=p.replace(/^\/|\/$/g,'').split('/');
-        if(segs.length===2&&segs[0]==='documentation'&&!p.endsWith('/')){
+        if(segs.length>=2&&segs[0]==='documentation'&&!p.endsWith('/')){
           location.href=p+'/'; return;
         }
       }catch(e){}
