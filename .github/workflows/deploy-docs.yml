@@ -1,11 +1,12 @@
 name: Deploy Docs
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - docs
     paths:
-      - "Documentation/latest/html/**"
+      - "Documentation/**"
 
 permissions:
   contents: read
@@ -28,10 +29,27 @@ jobs:
         with:
           ref: docs
 
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          # Latest docs at the site root
+          if [ -d Documentation/latest/html ]; then
+            cp -R Documentation/latest/html/. _site/
+          fi
+          # Each version under /<version>/
+          if [ -f Documentation/versions.json ]; then
+            for ver in $(python3 -c "import json; [print(v) for v in json.load(open('Documentation/versions.json'))]"); do
+              if [ -d "Documentation/$ver/html" ]; then
+                mkdir -p "_site/$ver"
+                cp -R "Documentation/$ver/html/." "_site/$ver/"
+              fi
+            done
+          fi
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: Documentation/latest/html
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
