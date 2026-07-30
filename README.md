@@ -21,7 +21,7 @@ The Adyen Issuing SDK enables iOS apps to integrate with Adyen's card issuing pl
 | `CardProvisioningSessions` | Apple Wallet provisioning sessions and Wallet Extension handlers |
 | `CardProvisioning` | In-app provisioning service and delegate protocol |
 | `CardProvisioningExtension` | Non-UI Issuer Extension for provisioning callbacks |
-| `IssuingCommon` | Shared types (`TokenProviding`, `IssuingEnvironment`, `SessionToken`) |
+| `IssuingCommon` | Shared types (`TokenProviding`, `SessionEnvironment`, `SessionToken`) |
 
 ## Requirements
 

@@ -15,7 +15,7 @@ All operations are session-based. Each session requires an app certificate (issu
 ## Module Map
 
 ```
-IssuingCommon               — Shared types (TokenProviding, SessionToken, IssuingEnvironment)
+IssuingCommon               — Shared types (TokenProviding, SessionToken, SessionEnvironment)
 CardSessions                — Card reveal, PIN reveal, PIN change (depends on IssuingCommon)
 CardProvisioningSessions    — Apple Wallet provisioning sessions + Wallet Extension handlers (depends on IssuingCommon)
 CardProvisioning            — Legacy in-app provisioning service (lower-level, delegate-based)
@@ -36,7 +36,7 @@ CardProvisioningExtension   — Legacy non-UI Issuer Extension service
 
 - **Never** import `IssuingCore` — it is an internal module and not part of the public API.
 - **Never** import `Card` — it is an internal dependency of `CardSessions`.
-- Always import `IssuingCommon` when using `TokenProviding`, `SessionToken`, or `IssuingEnvironment`.
+- Always import `IssuingCommon` when using `TokenProviding`, `SessionToken`, or `SessionEnvironment`.
 
 ## Prerequisites
 
@@ -70,10 +70,10 @@ CardProvisioningExtension   — Legacy non-UI Issuer Extension service
 import IssuingCommon
 
 // Production
-let env: IssuingEnvironment = .live
+let env: SessionEnvironment = .live
 
 // Testing (provisioning flow is limited in test)
-let env: IssuingEnvironment = .test
+let env: SessionEnvironment = .test
 ```
 
 ## Card Reveal & PIN
@@ -122,16 +122,28 @@ All `CardSession` methods throw `CardSessionError`. Match on error codes:
 ```swift
 do {
     let details = try await session.revealCardDetails(paymentInstrumentId: id)
-} catch CardSessionError.invalidSessionToken {
-    // Token expired or invalid — re-authenticate
-} catch CardSessionError.publicKeyExpired {
-    // Certificate issue — contact Adyen
-} catch CardSessionError.revealFailed {
-    // Reveal operation failed
-} catch {
-    // Other error
+} catch let error as CardSessionError {
+    switch error.code {
+    case .invalidSessionToken:
+        // Token expired or invalid — re-authenticate
+    case .publicKeyExpired:
+        // Certificate issue — contact Adyen
+    case .revealFailed:
+        // Reveal operation failed
+    default:
+        break
+    }
+
+    // Use underlyingError for support correlation
+    if let context = error.underlyingError {
+        print("Request ID: \(context.requestId ?? "N/A")")
+        print("Trace: \(context.traceParent ?? "N/A")")
+        print("HTTP status: \(context.httpErrorCode.map(String.init) ?? "N/A")")
+    }
 }
 ```
+
+The `underlyingError` property returns an `ErrorContext?` (from `IssuingCommon`) containing backend trace identifiers (`requestId`, `traceParent`) and the HTTP status code (`httpErrorCode`). Internal SDK error details are never exposed.
 
 Error codes: `invalidSessionToken`, `publicKeyExpired`, `couldNotEstablishSession`, `revealFailed`, `pinRevealFailed`, `pinChangeFailed`, `invalidPin`.
 
@@ -206,16 +218,29 @@ case .unknown:          // Unknown state
 ```swift
 do {
     try await session.configure()
-} catch CardProvisioningError.noPaymentInstrumentsProvided {
-    // Empty paymentInstrumentIds
-} catch CardProvisioningError.couldNotEstablishSession {
-    // Network or auth failure
-} catch CardProvisioningError.activationDataUnavailable {
-    // Could not fetch activation data
-} catch CardProvisioningError.provisioningCancelled {
-    // User dismissed the Apple Pay sheet
+} catch let error as CardProvisioningError {
+    switch error.code {
+    case .noPaymentInstrumentsProvided:
+        // Empty paymentInstrumentIds
+    case .couldNotEstablishSession:
+        // Network or auth failure
+    case .activationDataUnavailable:
+        // Could not fetch activation data
+    case .provisioningCancelled:
+        // User dismissed the Apple Pay sheet
+    default:
+        break
+    }
+
+    // Use underlyingError for support correlation
+    if let context = error.underlyingError {
+        print("Request ID: \(context.requestId ?? "N/A")")
+        print("HTTP status: \(context.httpErrorCode.map(String.init) ?? "N/A")")
+    }
 }
 ```
+
+The `underlyingError` property returns an `ErrorContext?` (from `IssuingCommon`) containing backend trace identifiers and the HTTP status code. Internal SDK error details are never exposed.
 
 Error codes: `noPaymentInstrumentsProvided`, `noKeychainGroupIdProvided`, `couldNotEstablishSession`, `activationDataUnavailable`, `provisioningAlreadyInProgress`, `provisioningCancelled`, `provisioningFailed`.
 
@@ -234,7 +259,7 @@ class MyExtensionHandler: WalletExtensionHandler {
         "group.com.example.app"
     }
 
-    override func environment() -> IssuingEnvironment {
+    override func environment() -> SessionEnvironment {
         .live
     }
 
@@ -319,9 +344,10 @@ dependencies: [
 | `AuthorizationResult` | `CardProvisioningSessions` | Auth outcome: .authorized, .canceled |
 | `TokenProviding` | `IssuingCommon` | Protocol for session token retrieval |
 | `SessionToken` | `IssuingCommon` | Opaque token wrapper (redacted in logs) |
-| `IssuingEnvironment` | `IssuingCommon` | Environment: .live, .test |
+| `SessionEnvironment` | `IssuingCommon` | Environment: .live, .test |
+| `ErrorContext` | `IssuingCommon` | Sanitized error diagnostics (requestId, traceParent, httpErrorCode) for support correlation |
 | `ProvisioningService` | `CardProvisioning` | Legacy in-app provisioning (delegate-based) |
-| `ProvisioningServiceDelegate` | `CardProvisioning` | Delegate for legacy provisioning callbacks |
+| `ProvisioningServiceDelegate` | `CardProvisioning` | Delegate for legacy provisioning callbacks (@MainActor) |
 | `ProvisioningServiceError` | `CardProvisioning` | Error type for legacy provisioning |
 | `ExtensionProvisioningService` | `CardProvisioningExtension` | Legacy non-UI extension service |
 | `ExtensionProvisioningServiceDelegate` | `CardProvisioningExtension` | Delegate for legacy extension callbacks |
