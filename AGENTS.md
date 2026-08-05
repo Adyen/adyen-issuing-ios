@@ -60,21 +60,29 @@ CardProvisioningExtension   — Legacy non-UI Issuer Extension service
    }
    ```
 
-3. **Entitlements** (provisioning only):
+3. **App Attest entitlement** — required for all session-based operations. Add the `com.apple.developer.devicecheck.appattest-environment` entitlement to your app:
+   - `"development"` — use with `SessionEnvironment.test`. Card operations (reveal, PIN) work fully. Provisioning flow is limited.
+   - `"production"` — use with `SessionEnvironment.live`. Full provisioning flow requires an App Store or TestFlight build. TestFlight builds automatically set the App Attest environment to `"production"`.
+
+4. **Entitlements** (provisioning only):
    - `com.apple.developer.payment-pass-provisioning`
    - Keychain access group shared between the app and the Wallet Extension
 
 ## Environment
 
+The SDK environment must match your App Attest entitlement value:
+
 ```swift
 import IssuingCommon
 
-// Production
+// App Attest entitlement = "production" (App Store / TestFlight builds)
 let env: SessionEnvironment = .live
 
-// Testing (provisioning flow is limited in test)
+// App Attest entitlement = "development" (local builds)
 let env: SessionEnvironment = .test
 ```
+
+> **Note:** The full Apple Wallet provisioning flow is only available with `.live` environment and an App Store or TestFlight build.
 
 ## Card Reveal & PIN
 
@@ -161,8 +169,10 @@ let session = try ProvisioningSession(
     parameters: CardProvisioningSessions.Configuration(
         appCertificate: certificate,
         paymentInstrumentIds: ["PI123...", "PI456..."],
-        keychainAccessGroup: "group.com.example.app",
-        environment: .live
+        keychainAccessGroup: "TEAM_ID.group.com.example.app",
+        environment: .live,
+        shouldRefreshCachedData: true,   // default: true — fetches fresh activation data
+        isWatchActivated: nil            // default: nil — auto-detects watch pairing
     ),
     tokenProvider: myTokenProvider
 )
@@ -335,16 +345,16 @@ dependencies: [
 | `CardSessionError` | `CardSessions` | Error type for card session operations |
 | `CardSessions.Configuration` | `CardSessions` | Config: appCertificate, environment |
 | `ProvisioningSession` | `CardProvisioningSessions` | Apple Wallet provisioning session |
-| `ProvisioningState` | `CardProvisioningSessions` | State enum: canProvision, provisioned, cannotProvision |
-| `CardActivationState` | `CardProvisioningSessions` | Result of provisioning: activated, requiresActivation, etc. |
+| `ProvisioningState` | `CardProvisioningSessions` | State enum (@MainActor): canProvision, provisioned, cannotProvision |
+| `CardActivationState` | `CardProvisioningSessions` | Result of provisioning (@MainActor): activated, requiresActivation, etc. |
 | `CardProvisioningError` | `CardProvisioningSessions` | Error type for provisioning operations |
-| `CardProvisioningSessions.Configuration` | `CardProvisioningSessions` | Config: appCertificate, paymentInstrumentIds, keychainAccessGroup, environment |
+| `CardProvisioningSessions.Configuration` | `CardProvisioningSessions` | Config: appCertificate, paymentInstrumentIds, keychainAccessGroup, environment, shouldRefreshCachedData, isWatchActivated |
 | `WalletExtensionHandler` | `CardProvisioningSessions` | Base class for non-UI Wallet Extension |
 | `WalletExtensionUIHandler` | `CardProvisioningSessions` | Base class for UI Wallet Extension (auth) |
-| `AuthorizationResult` | `CardProvisioningSessions` | Auth outcome: .authorized, .canceled |
+| `AuthorizationResult` | `CardProvisioningSessions` | Auth outcome (@MainActor): .authorized, .canceled |
 | `TokenProviding` | `IssuingCommon` | Protocol for session token retrieval |
 | `SessionToken` | `IssuingCommon` | Opaque token wrapper (redacted in logs) |
-| `SessionEnvironment` | `IssuingCommon` | Environment: .live, .test |
+| `SessionEnvironment` | `IssuingCommon` | Environment (struct, RawRepresentable): .live, .test |
 | `ErrorContext` | `IssuingCommon` | Sanitized error diagnostics (requestId, traceParent, httpErrorCode) for support correlation |
 | `ProvisioningService` | `CardProvisioning` | Legacy in-app provisioning (delegate-based) |
 | `ProvisioningServiceDelegate` | `CardProvisioning` | Delegate for legacy provisioning callbacks (@MainActor) |
