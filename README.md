@@ -103,7 +103,20 @@ let session = try ProvisioningSession(
 )
 
 try await session.configure()
+
 let state = await session.provisioningState(for: "PI123...")
+
+switch state {
+case .canProvision:
+    // Show "Add to Apple Wallet" button
+    let result = try await session.provision(paymentInstrumentId: "PI123...", viewController: self)
+case .provisioned:
+    // Card is already in Apple Wallet
+    break
+case .cannotProvision(let reason):
+    // Handle reason (.notConfigured, .cannotAddCard, etc.)
+    break
+}
 ```
 
 ## Documentation

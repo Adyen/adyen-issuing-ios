@@ -293,22 +293,38 @@ Set this class as the `NSExtensionPrincipalClass` in the extension's `Info.plist
 
 ## Wallet Extension (UI / Auth)
 
-Subclass `WalletExtensionUIHandler` in your Issuer Provisioning Extension UI target.
+Subclass `WalletExtensionUIHandler` in your Issuer Provisioning Extension UI target. Build your authentication UI inside the initializer and call `completeAuthorization(result:)` when the user finishes.
 
 ```swift
 import CardProvisioningSessions
+import UIKit
 
-class MyAuthHandler: WalletExtensionUIHandler {
+class WalletUIExtensionHandler: WalletExtensionUIHandler {
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        // Present your authentication UI (e.g. Face ID, PIN entry)
-        authenticateUser { [weak self] success in
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+
+        let authViewController = YourAuthViewController { [weak self] success in
             self?.completeAuthorization(result: success ? .authorized : .canceled)
         }
+
+        addChild(authViewController)
+        view.addSubview(authViewController.view)
+        authViewController.view.frame = view.bounds
+        authViewController.didMove(toParent: self)
     }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        children.first?.view.frame = view.bounds
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 }
 ```
+
+SwiftUI is also supported via `UIHostingController`.
 
 Set this class as the `NSExtensionPrincipalClass` in the UI extension's `Info.plist`.
 
