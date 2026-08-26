@@ -13,20 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Card detail reveal (PAN, CVC, expiry month, expiry year) via end-to-end encryption.
 - PIN reveal for cardholders.
 - PIN change for cardholders.
-- `CardSessionError` with structured error codes and `ErrorContext` for support correlation.
+- `CardSessionError` with structured error codes and diagnostic summaries for support correlation.
 
 #### CardProvisioningSessions
 - Session-based Apple Wallet provisioning with `ProvisioningSession`.
 - Provisioning state checking per payment instrument (phone, watch, or both).
 - `WalletExtensionHandler` base class for non-UI Issuer Provisioning Extensions.
 - `WalletExtensionUIHandler` base class for UI-based extension authentication.
-- `CardProvisioningError` with structured error codes and `ErrorContext` for support correlation.
+- `CardProvisioningSessionError` with structured error codes and diagnostic summaries for support correlation.
 
 #### IssuingCommon
 - `TokenProviding` protocol for session token retrieval.
 - `SessionToken` opaque wrapper with redacted string representations.
 - `SessionEnvironment` for environment configuration (`.live`, `.test`).
-- `ErrorContext` for sanitized error diagnostics (`requestId`, `traceParent`).
 
 #### Legacy Modules
 - `CardProvisioning` for delegate-based in-app provisioning.

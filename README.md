@@ -16,11 +16,12 @@ The Adyen Issuing SDK enables iOS apps to integrate with Adyen's card issuing pl
 
 | Module | Description |
 |---|---|
+| `Card` | Low-level card services (`CardRevealService`, `PinRevealService`, `PinChangeService`) |
 | `CardSessions` | Card reveal (PAN, CVC, expiry), PIN reveal, and PIN change |
 | `CardProvisioningSessions` | Apple Wallet provisioning sessions and Wallet Extension handlers |
-| `IssuingCommon` | Shared types (`TokenProviding`, `SessionEnvironment`, `SessionToken`, `ErrorContext`) |
+| `IssuingCommon` | Shared types (`TokenProviding`, `SessionEnvironment`, `SessionToken`) |
 
-> **Note:** `CardProvisioning` and `CardProvisioningExtension` are legacy modules. New integrations should use `CardProvisioningSessions`.
+> **Note:** `CardProvisioning` and `CardProvisioningExtension` are legacy modules. New integrations should use `CardProvisioningSessions`. Most apps should use `CardSessions` rather than `Card` directly.
 
 ## Requirements
 
