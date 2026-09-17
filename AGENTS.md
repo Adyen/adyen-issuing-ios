@@ -28,7 +28,7 @@ CardProvisioningExtension   — Legacy non-UI Issuer Extension service
 | Use case | Import |
 |---|---|
 | Card reveal / PIN (recommended) | `CardSessions`, `IssuingCommon` |
-| Card reveal / PIN (low-level) | `Card`, `IssuingCommon` |
+| Card reveal / PIN (low-level) | `Card` |
 | Apple Wallet provisioning (recommended) | `CardProvisioningSessions`, `IssuingCommon` |
 | Apple Wallet provisioning (legacy) | `CardProvisioning` |
 | Wallet Extension (non-UI) | `CardProvisioningSessions`, `IssuingCommon` |
@@ -145,6 +145,35 @@ do {
 ```
 
 Error codes: `sessionTokenRetrievalFailed`, `couldNotEstablishSession`, `cardRevealFailed`, `pinRevealFailed`, `pinChangeFailed`, `invalidPin`.
+
+### Low-level Card module (standalone)
+
+Prefer `CardSessions` above. Use the `Card` module directly only when you manage your own networking. It is a standalone cryptographic library with no dependency on the rest of the SDK — import `Card` alone. It is a drop-in replacement for the standalone `adyen-card-reveal-ios` package: the API is identical, only the import name changes (`import AdyenCardReveal` → `import Card`).
+
+```swift
+import Card
+
+// Card reveal
+let cardReveal = CardRevealService()
+let encryptedKey = try cardReveal.generateEncryptedKey(jwk: publicKeyData) // send to your backend
+// ...your backend returns `encryptedData`...
+let details = try cardReveal.cardDetails(encryptedData: encryptedData)     // decrypt on the SAME instance
+
+// PIN reveal
+let pinReveal = PinRevealService()
+let pinKey = try pinReveal.generateEncryptedKey(jwk: publicKeyData)
+let pin = try pinReveal.pin(encryptedPinBlock: encryptedPinBlock, token: token)
+
+// PIN change
+let pinChange = PinChangeService()
+let payload = try pinChange.encryptedPinBlock(jwk: publicKeyData, pin: "4812")
+```
+
+Each service is **stateful**: `generateEncryptedKey` retains the symmetric key for the following `cardDetails` / `pin` call, so both calls must run on the **same instance**. Use a fresh instance per operation. (`generateEncryptedKey(pem:)` accepts raw DER bytes as an alternative to `jwk:`.)
+
+All methods throw only the module's public error types — `CardRevealService.CardRevealError`, `PinRevealService.PinRevealError`, `PinChangeService.PinChangeError`; no internal errors leak. Notable cases: `.keyNotGenerated` (a decrypt/`pin` call was made before `generateEncryptedKey`), `.invalidPublicKey`, `.invalidEncryptedData`, `.decryptionFailed`, and for PIN change `.invalidPin` / `.unallowedPin`.
+
+For dependency injection or mocking in tests, each service conforms to a protocol: `CardRevealing`, `PinRevealing`, `PinChanging`.
 
 ## Apple Wallet Provisioning (Recommended)
 
@@ -344,6 +373,9 @@ dependencies: [
 | `CardRevealService` | `Card` | Low-level card reveal service |
 | `PinRevealService` | `Card` | Low-level PIN reveal service |
 | `PinChangeService` | `Card` | Low-level PIN change service |
+| `CardRevealing` | `Card` | Protocol `CardRevealService` conforms to (for injection / mocking) |
+| `PinRevealing` | `Card` | Protocol `PinRevealService` conforms to (for injection / mocking) |
+| `PinChanging` | `Card` | Protocol `PinChangeService` conforms to (for injection / mocking) |
 | `CardSession` | `CardSessions` | Card reveal, PIN reveal, PIN change |
 | `CardDetails` | `CardSessions` | Returned by `revealCardDetails` (pan, cvc, expiryMonth, expiryYear) |
 | `CardSessionError` | `CardSessions` | Error type for card session operations |
