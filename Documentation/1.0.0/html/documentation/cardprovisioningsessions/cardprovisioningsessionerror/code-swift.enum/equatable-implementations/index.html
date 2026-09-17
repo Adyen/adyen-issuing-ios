@@ -1,12 +1,16 @@
 <!doctype html><html lang="en-US" class="no-js"><head><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="icon" href="/adyen-issuing-ios/1.0.0/favicon.ico"><link rel="mask-icon" href="/adyen-issuing-ios/1.0.0/favicon.svg" color="#333333"><title>Documentation</title><script>var baseUrl = "/adyen-issuing-ios/1.0.0/"</script><script defer="defer" src="/adyen-issuing-ios/1.0.0/js/chunk-vendors.bdb7cbba.js"></script><script defer="defer" src="/adyen-issuing-ios/1.0.0/js/index.5b6366e8.js"></script><link href="/adyen-issuing-ios/1.0.0/css/index.d0b63544.css" rel="stylesheet"></head><body data-color-scheme="auto"><noscript><style>.noscript{font-family:"SF Pro Display","SF Pro Icons","Helvetica Neue",Helvetica,Arial,sans-serif;margin:92px auto 140px auto;text-align:center;width:980px}.noscript-title{color:#111;font-size:48px;font-weight:600;letter-spacing:-.003em;line-height:1.08365;margin:0 auto 54px auto;width:502px}@media only screen and (max-width:1068px){.noscript{margin:90px auto 120px auto;width:692px}.noscript-title{font-size:40px;letter-spacing:0;line-height:1.1;margin:0 auto 45px auto;width:420px}}@media only screen and (max-width:735px){.noscript{margin:45px auto 60px auto;width:87.5%}.noscript-title{font-size:32px;letter-spacing:.004em;line-height:1.125;margin:0 auto 35px auto;max-width:330px;width:auto}}#loading-placeholder{display:none}</style><div class="noscript"><h1 class="noscript-title">This page requires JavaScript.</h1><p>Please turn on JavaScript in your browser and refresh the page to view its content.</p></div></noscript><div id="app"></div><script>
 (function(){
   var GUIDES=new Set(["/documentation/cardprovisioningsessions/additionalresources", "/documentation/cardprovisioningsessions/cardmoduleguide", "/documentation/cardprovisioningsessions/cardprovisioningguide", "/documentation/cardprovisioningsessions/cardsessionsguide", "/documentation/cardprovisioningsessions/gettingstarted", "/documentation/cardprovisioningsessions/manualintegration", "/documentation/cardprovisioningsessions/offlineprovisioningguide", "/documentation/cardprovisioningsessions/securityguide", "/documentation/cardprovisioningsessions/sessionsprovisioningguide", "/documentation/issuingsdkdocs/additionalresources", "/documentation/issuingsdkdocs/cardmoduleguide", "/documentation/issuingsdkdocs/cardprovisioningguide", "/documentation/issuingsdkdocs/cardsessionsguide", "/documentation/issuingsdkdocs/gettingstarted", "/documentation/issuingsdkdocs/manualintegration", "/documentation/issuingsdkdocs/offlineprovisioningguide", "/documentation/issuingsdkdocs/securityguide", "/documentation/issuingsdkdocs/sessionsprovisioningguide"]);
+  var GUIDE_LANDING="/adyen-issuing-ios/1.0.0/documentation/issuingsdkdocs/";
   function docPath(p){
     var i=p.indexOf('/documentation/');
     if(i<0) return null;
     var d=p.slice(i);
     if(d.length>1&&d.charAt(d.length-1)==='/') d=d.slice(0,-1);
     return d;
+  }
+  function isRoot(pathname){
+    return /\/documentation\/?$/.test(pathname);
   }
   function isRef(pathname){
     var d=docPath(pathname);
@@ -20,13 +24,23 @@
     var a=e.target&&e.target.closest?e.target.closest('a[href]'):null;
     if(!a||a.target==='_blank'||a.hasAttribute('download')) return;
     var u; try{u=new URL(a.href,location.origin);}catch(_){return;}
-    if(u.origin!==location.origin||!isRef(u.pathname)) return;
+    if(u.origin!==location.origin) return;
+    if(isRoot(u.pathname)){
+      e.preventDefault(); e.stopImmediatePropagation();
+      if(withSlash(location.pathname)!==GUIDE_LANDING) location.assign(GUIDE_LANDING);
+      return;
+    }
+    if(!isRef(u.pathname)) return;
     if(docPath(u.pathname)===docPath(location.pathname)) return; // same page (#anchor)
     e.preventDefault(); e.stopImmediatePropagation();
     location.assign(withSlash(u.pathname)+u.search+u.hash);
   },true);
   function normalize(replace){
     var p=location.pathname;
+    if(isRoot(p)){
+      if(replace) location.replace(GUIDE_LANDING); else location.assign(GUIDE_LANDING);
+      return true;
+    }
     if(isRef(p)&&p.charAt(p.length-1)!=='/'){
       var t=withSlash(p)+location.search+location.hash;
       if(replace) location.replace(t); else location.assign(t);
@@ -46,5 +60,5 @@ border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px);white-space:no
 #adyen-docs-version a{color:#0a84ff;text-decoration:none;}
 #adyen-docs-version a:hover{text-decoration:underline;}
 </style>
-<div id="adyen-docs-version">v1.0&nbsp;&nbsp;<a href="https://github.com/Adyen/adyen-issuing-ios/1.0.0/releases" target="_blank" rel="noopener">All releases &rarr;</a></div>
+<div id="adyen-docs-version">v1.0&nbsp;&nbsp;<a href="https://github.com/Adyen/adyen-issuing-ios/releases" target="_blank" rel="noopener">All releases &rarr;</a></div>
 </body></html>
