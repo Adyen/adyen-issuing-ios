@@ -269,6 +269,8 @@ Error codes: `noPaymentInstrumentsProvided`, `noKeychainGroupIdProvided`, `could
 
 ## Wallet Extension (Non-UI)
 
+> **Required for Apple Wallet provisioning.** The Issuer Provisioning Extension is mandatory. Without it, cards cannot be added from the Apple Wallet app, and the Wallet app will not offer the card for provisioning. Implement the Non-UI extension, and the UI extension when your authorization flow requires it, before shipping.
+
 Subclass `WalletExtensionHandler` in your Issuer Provisioning Extension target.
 
 ```swift

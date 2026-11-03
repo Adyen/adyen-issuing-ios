@@ -32,3 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CardProvisioningExtension` for non-UI Issuer Extension callbacks.
 
 > New integrations should use `CardProvisioningSessions` instead of the legacy modules.
+
+### Changed
+
+- Session-based operations are more reliable when multiple sessions run concurrently.
